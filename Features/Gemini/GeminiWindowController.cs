@@ -39,6 +39,13 @@ internal sealed class GeminiWindowController
         _tracker.Start();
     }
 
+    internal bool IsVisibleCached => _window != IntPtr.Zero && IsWindow(_window) && IsWindowVisible(_window) && !IsIconic(_window);
+    internal async Task EnsureVisibleAsync()
+    {
+        var hwnd = FindWindow();
+        if (hwnd != IntPtr.Zero) { RestoreCachedWindow(hwnd); return; }
+        await ToggleAsync();
+    }
     public bool IsVisible => FindWindow() is var h && h != IntPtr.Zero && IsWindowVisible(h);
     public void StopTracking() => _tracker.Stop();
     public void HideIfCached()
@@ -103,16 +110,25 @@ internal sealed class GeminiWindowController
         {
             if (File.Exists(SessionFile))
             {
-                var saved = File.ReadAllText(SessionFile).Trim();
-                if (Uri.TryCreate(saved, UriKind.Absolute, out var uri)
-                    && uri.Scheme == Uri.UriSchemeHttps
-                    && uri.Host.Equals("gemini.google.com", StringComparison.OrdinalIgnoreCase)
-                    && uri.AbsolutePath.StartsWith("/app/", StringComparison.OrdinalIgnoreCase))
-                    return uri.GetLeftPart(UriPartial.Path);
+                if (TryNormalizeSavedConversationUrl(File.ReadAllText(SessionFile), out var url))
+                    return url;
             }
         }
         catch (Exception ex) { PetLog.Info("Saved conversation unavailable: " + ex.Message); }
         return Url;
+    }
+
+    // Keep the legacy restore URL rules testable without accessing the real Edge profile.
+    internal static bool TryNormalizeSavedConversationUrl(string input, out string url)
+    {
+        url = "";
+        if (!Uri.TryCreate(input.Trim(), UriKind.Absolute, out var uri)
+            || uri.Scheme != Uri.UriSchemeHttps
+            || !uri.Host.Equals("gemini.google.com", StringComparison.OrdinalIgnoreCase)
+            || !uri.AbsolutePath.StartsWith("/app/", StringComparison.OrdinalIgnoreCase))
+            return false;
+        url = uri.GetLeftPart(UriPartial.Path);
+        return true;
     }
 
     private IntPtr FindWindow()

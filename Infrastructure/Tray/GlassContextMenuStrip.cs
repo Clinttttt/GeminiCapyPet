@@ -40,6 +40,17 @@ internal sealed class GlassContextMenuStrip : ContextMenuStrip
                 Configure(choice.DropDown);
     }
 
+    public void RefreshTheme()
+    {
+        RefreshTree(this);
+    }
+    private void RefreshTree(ToolStripDropDown menu)
+    {
+        ApplyTheme(menu);
+        foreach (ToolStripItem item in menu.Items)
+            if (item is ToolStripMenuItem choice && choice.HasDropDownItems) RefreshTree(choice.DropDown);
+    }
+
     private void ApplyTheme(ToolStripDropDown menu)
     {
         bool highContrast = SystemInformation.HighContrast;

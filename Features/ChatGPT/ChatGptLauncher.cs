@@ -30,6 +30,13 @@ internal sealed class ChatGptLauncher
     }
 
     public void StopTracking() => _tracker.Stop();
+    internal bool IsVisibleCached => _window != IntPtr.Zero && IsWindow(_window) && IsWindowVisible(_window) && !IsIconic(_window);
+    internal async Task EnsureVisibleAsync()
+    {
+        var hwnd = FindChatWindow();
+        if (hwnd != IntPtr.Zero) { ShowAndPosition(hwnd); return; }
+        await ToggleAsync();
+    }
     public bool IsVisible => FindChatWindow() is var hwnd && hwnd != IntPtr.Zero && IsWindowVisible(hwnd);
     // Never perform slow Edge/WMI discovery merely to hide the other provider.
     // The selected provider is already tracked by the pet coordinator.

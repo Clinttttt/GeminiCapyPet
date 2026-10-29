@@ -13,6 +13,13 @@ than accidentally treating target behavior as current behavior.
 Exit evidence: committed runnable checks or clearly documented manual scenarios,
 baseline revision/results, and explicit unverified cases.
 
+**2026-10-29 working-tree progress (partial, not yet committed):** Added
+`tests/Capies.Characterization.Tests` with 18 passing tests for legacy preferences
+and both saved-conversation URL rules. The Release build passed with zero warnings.
+See [characterization evidence](characterization-2026-10-29.md). Manual menu,
+provider switching, DPI, profile restoration, and latency acceptance remain
+unverified; Gate 1 is not complete.
+
 ## 2. Extract coordination without rewriting providers
 
 Introduce coordinator/session contracts and wrap existing Gemini/ChatGPT controllers.
@@ -67,3 +74,7 @@ or promised by the architecture foundation. No third-party plugin loader is plan
 For each completed gate, add its implementation commit, exact checks/results,
 remaining limitations, and any linked ADR. Keep incomplete gates marked pending.
 Record partial implementation as partial; do not infer completion from file names.
+
+## Software library increment
+
+See [software library implementation and evidence](software-library.md). The software manager, icon toolbar, tray collapse, catalog, and serialized coordinator now exist. The complete architecture migration and remaining acceptance gates are still partial.

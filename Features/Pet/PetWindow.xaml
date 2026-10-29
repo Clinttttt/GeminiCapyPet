@@ -18,13 +18,31 @@
                Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"
                RenderTransformOrigin="0.5,0.88" />
         <Border x:Name="HintPill" VerticalAlignment="Bottom" HorizontalAlignment="Center"
-                Margin="0,0,0,6" Padding="12,5" CornerRadius="12"
-                Background="#E51C2639" Opacity="0" IsHitTestVisible="False">
+                Margin="0,0,0,4" Padding="5" CornerRadius="16" Background="#F01C2639" Opacity="1"
+                MouseLeftButtonDown="OnToolbarMouseDown">
+            <Border.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Width" Value="34"/><Setter Property="Height" Value="30"/>
+                    <Setter Property="Background" Value="Transparent"/><Setter Property="Foreground" Value="#EDF1F7"/>
+                    <Setter Property="BorderThickness" Value="0"/><Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Background" Value="#405674"/></Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="Background" Value="#405674"/></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate></Setter.Value></Setter>
+                </Style>
+            </Border.Resources>
             <StackPanel Orientation="Horizontal">
-                <Ellipse Width="7" Height="7" Fill="#8CD4A0" Margin="0,0,7,0"
-                         VerticalAlignment="Center"/>
-                <TextBlock x:Name="HintText" Text="Open Gemini" Foreground="White"
-                           FontSize="11" FontWeight="SemiBold"/>
+                <Button x:Name="AppButton" Click="OnAppButton" AutomationProperties.Name="Toggle selected software">
+                    <Image x:Name="SelectedAppIcon" Width="23" Height="23"/>
+                </Button>
+                <Button Content="☰" Click="OnMenuButton" ToolTip="Capies menu" AutomationProperties.Name="Capies menu"/>
+                <Button Content="−" FontSize="20" Click="OnCollapseButton" ToolTip="Collapse Capies to tray" AutomationProperties.Name="Collapse Capies to tray"/>
+                <TextBlock x:Name="HintText" Visibility="Collapsed"/>
             </StackPanel>
         </Border>
     </Grid>

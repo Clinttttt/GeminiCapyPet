@@ -10,6 +10,10 @@
     <ApplicationIcon>Assets\Capies.ico</ApplicationIcon>
     <UseSystemManagement>true</UseSystemManagement>
   </PropertyGroup>
+  <!-- The root SDK project otherwise includes C# files from nested test projects. -->
+  <ItemGroup>
+    <Compile Remove="tests\**\*.cs" />
+  </ItemGroup>
   <ItemGroup>
     <Resource Include="Assets\Capies-sleep.png" />
   </ItemGroup>

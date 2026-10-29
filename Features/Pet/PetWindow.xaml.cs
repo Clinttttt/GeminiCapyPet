@@ -31,22 +31,13 @@ public partial class PetWindow : Window
     private double _windowStartTop;
     private bool _pressed;
     private bool _dragging;
-    private bool _busy;
-    private bool _pendingToggle;
-    private enum ChatProvider { Gemini, ChatGpt }
-    private ChatProvider _activeProvider = ChatProvider.Gemini;
-
-    private void SelectProvider(ChatProvider provider)
-    {
-        _activeProvider = provider;
-        _preferences.ActiveChatProvider = provider.ToString();
-        _preferences.Save();
-        PetLog.Info($"Selected chat provider: {provider}");
-    }
-
-    private Task ToggleActiveChatAsync() => _activeProvider == ChatProvider.ChatGpt
-        ? ToggleChatGptAsync() : ToggleGeminiAsync();
-
+    private SoftwareCatalog _software = null!;
+    private AppCoordinator _apps = null!;
+    private SoftwareWindow? _softwareWindow;
+    private Forms.ToolStripMenuItem? _softwareMenu;
+    private bool _closingReady;
+    private bool _closingStarted;
+    private bool _busy => _apps?.Busy == true;
     internal PetPose SelectedPose => _animator.Pose;
     internal double PetSize => Width;
     internal bool AutoSleep => _preferences.AutoSleep;
@@ -62,9 +53,10 @@ public partial class PetWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _activeProvider = Enum.TryParse<ChatProvider>(_preferences.ActiveChatProvider, true, out var provider)
-            ? provider : ChatProvider.Gemini;
-        PetLog.Info($"Restored chat provider: {_activeProvider}");
+        _software = new SoftwareCatalog(System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GeminiCapyPet", "software.json"),
+            _preferences.ActiveChatProvider);
+        _apps = SoftwareComposition.Create(_gemini, _chatGpt);
         _animator.SetPose(_preferences.SelectedPose);
         ApplySize(_preferences.Size, false);
 
@@ -141,10 +133,10 @@ public partial class PetWindow : Window
         var bottom = Top + Height;
 
         Width = size;
-        Height = size + 14;
+        Height = size + 44;
         PetSprite.Width = size - 4;
         PetSprite.Height = size - 4;
-        HintPill.Visibility = size < 180 ? Visibility.Collapsed : Visibility.Visible;
+        HintPill.Visibility = Visibility.Visible;
 
         if (preserveBottomRight)
             MoveOnScreen(right - Width, bottom - Height);
@@ -153,8 +145,8 @@ public partial class PetWindow : Window
     private void SetupTray()
     {
         _menu = new GlassContextMenuStrip();
-        _menu.Items.Add("Show / hide Gemini", null, async (_, _) => await ToggleGeminiAsync());
-        _menu.Items.Add("Show / hide ChatGPT", null, async (_, _) => await ToggleChatGptAsync());
+        _menu.Items.Add("Show / hide Gemini", null, async (_, _) => await RunSoftwareAsync("gemini"));
+        _menu.Items.Add("Show / hide ChatGPT", null, async (_, _) => await RunSoftwareAsync("chatgpt"));
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add("Customize pet...", null, (_, _) => OpenSettings());
 
@@ -203,12 +195,17 @@ public partial class PetWindow : Window
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add("Exit Gemini Capy Pet", null, (_, _) => Close());
 
+        _softwareMenu = new Forms.ToolStripMenuItem("Software");
+        _menu.Items.Insert(0, _softwareMenu);
+        _menu.Items.Insert(1, new Forms.ToolStripMenuItem("Manage software...", null, (_, _) => OpenSoftware()));
+        _menu.Items.Insert(2, new Forms.ToolStripMenuItem("Show Capies", null, (_, _) => { Show(); Activate(); }));
+        RefreshSoftware();
         _menu.InitializeTheme();
         UpdateMenuSelections();
 
         _trayIcon = new Forms.NotifyIcon
         {
-            Text = "Capies - Click to toggle selected chat",
+            Text = "Capies - Double-click to show pet",
             Icon = Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!)
                 ?? Drawing.SystemIcons.Application,
             Visible = true,
@@ -271,7 +268,7 @@ public partial class PetWindow : Window
     private void OnIdleTick(object? sender, EventArgs e)
     {
         if (_preferences.AutoSleep && SelectedPose == PetPose.Automatic &&
-            !_pressed && !_busy && !_gemini.IsVisible && !_chatGpt.IsVisible &&
+            !_pressed && !_busy && !_apps.AnyVisible &&
             DateTime.UtcNow - _lastActivity > TimeSpan.FromSeconds(45))
             _animator.Sleep();
     }
@@ -279,15 +276,14 @@ public partial class PetWindow : Window
     private void OnPetEnter(object sender, MouseEventArgs e)
     {
         _lastActivity = DateTime.UtcNow;
-        HintPill.Opacity = 0.95;
-        HintText.Text = _activeProvider == ChatProvider.ChatGpt
-            ? "Click to toggle ChatGPT" : "Click to toggle Gemini";
+        HintPill.Opacity = 1;
+        HintText.Text = "Click to toggle " + _software.Selected.Name;
         _animator.Wake();
     }
 
     private void OnPetLeave(object sender, MouseEventArgs e)
     {
-        if (!_busy) HintPill.Opacity = 0;
+        HintPill.Opacity = 1;
     }
 
     private void OnPetMouseDown(object sender, MouseButtonEventArgs e)
@@ -353,26 +349,7 @@ public partial class PetWindow : Window
         RequestPetToggle();
     }
 
-    // Serialize rapid clicks. A second click during startup is not discarded:
-    // it is replayed after the current toggle finishes.
-    private async void RequestPetToggle()
-    {
-        if (_busy)
-        {
-            _pendingToggle = !_pendingToggle;
-            PetLog.Info("Pet toggle queued while provider is busy.");
-            return;
-        }
-        await ToggleActiveChatAsync();
-    }
-
-    private void ReplayPendingToggle()
-    {
-        if (!_pendingToggle) return;
-        _pendingToggle = false;
-        Dispatcher.BeginInvoke(new Action(() => _ = ToggleActiveChatAsync()),
-            DispatcherPriority.Background);
-    }
+    private async void RequestPetToggle() => await RunSoftwareAsync(_software.SelectedId);
     private void OnPetRightClick(object sender, MouseButtonEventArgs e)
     {
         PetLog.Info("Pet right-click menu requested");
@@ -380,66 +357,71 @@ public partial class PetWindow : Window
         e.Handled = true;
     }
 
-    private async Task ToggleChatGptAsync()
+    private async Task RunSoftwareAsync(string id, bool activate = false)
     {
-        if (_busy) return;
-        _busy = true;
-        SelectProvider(ChatProvider.ChatGpt);
+        if (_closingStarted) return;
         try
         {
-            await Task.Run(async () =>
-            {
-                if (_chatGpt.IsVisible) _chatGpt.Hide();
-                else
-                {
-                    _gemini.HideIfCached();
-                    await _chatGpt.ToggleAsync();
-                }
-            });
+            var entry = _software.Apps.First(a => a.Id == id);
+            await Task.Run(() => _software.Select(id));
+            RefreshSoftware();
+            HintText.Text = "Opening " + entry.Name;
+            await _apps.ToggleAsync(entry, activate);
+            HintText.Text = "Click to toggle " + entry.Name;
         }
         catch (Exception ex)
         {
-            PetLog.Info("ChatGPT toggle failed: " + ex);
-            System.Windows.MessageBox.Show(this, ex.Message, "Capies - ChatGPT", MessageBoxButton.OK, MessageBoxImage.Warning);
+            PetLog.Info("Software command failed: " + ex.Message);
+            System.Windows.MessageBox.Show(this, ex.Message, "Capies", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-        finally { _busy = false; ReplayPendingToggle(); }
+        finally { _lastActivity = DateTime.UtcNow; }
     }
 
-    private async Task ToggleGeminiAsync()
+    private void RefreshSoftware()
     {
-        if (_busy) return;
-        _busy = true;
-        SelectProvider(ChatProvider.Gemini);
-        PetLog.Info("Starting Gemini toggle");
-        HintPill.Opacity = 0.95;
-        HintText.Text = "Opening Gemini...";
-        try
+        SelectedAppIcon.Source = SoftwareIcons.Get(_software.Selected);
+        AppButton.ToolTip = "Show / hide " + _software.Selected.Name;
+        HintText.Text = "Click to toggle " + _software.Selected.Name;
+        if (_softwareMenu == null) return;
+        foreach (var item in _softwareMenu.DropDownItems.Cast<Forms.ToolStripItem>().ToArray()) item.Dispose();
+        _softwareMenu.DropDownItems.Clear();
+        foreach (var app in _software.Apps)
         {
-            var visible = await Task.Run(async () =>
-            {
-                if (!_gemini.IsVisible) _chatGpt.HideIfCached();
-                return await _gemini.ToggleAsync();
-            });
-            PetLog.Info($"Gemini toggle successful; visible={visible}");
-            HintText.Text = visible ? "Gemini opened" : "Gemini hidden";
+            var item = new Forms.ToolStripMenuItem(app.Name) { Checked = app.Id == _software.SelectedId };
+            item.Click += async (_, _) => await RunSoftwareAsync(app.Id);
+            _softwareMenu.DropDownItems.Add(item);
         }
-        catch (Exception exception)
-        {
-            PetLog.Info($"Gemini error: {exception}");
-            HintText.Text = "Gemini unavailable";
-            System.Windows.MessageBox.Show(this, exception.Message, "Gemini Capy Pet",
-                MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-        finally
-        {
-            _busy = false;
-            _lastActivity = DateTime.UtcNow;
-            ReplayPendingToggle();
-        }
+        if (_menu != null) _menu.RefreshTheme();
     }
 
-    private void OnClosing(object? sender, CancelEventArgs e)
+    private void OpenSoftware()
     {
+        if (_softwareWindow != null) { _softwareWindow.Activate(); return; }
+        _softwareWindow = new SoftwareWindow(_software,
+            id => RunSoftwareAsync(id, true),
+            async id => { await _apps.ReleaseAsync(id); await Task.Run(() => _software.Remove(id)); },
+            RefreshSoftware);
+        _softwareWindow.Closed += (_, _) => _softwareWindow = null;
+        _softwareWindow.Show();
+    }
+    private async void OnAppButton(object sender, RoutedEventArgs e) { e.Handled = true; await RunSoftwareAsync(_software.SelectedId); }
+    private void OnMenuButton(object sender, RoutedEventArgs e) { e.Handled = true; _menu?.Show(Forms.Control.MousePosition); }
+    private void OnCollapseButton(object sender, RoutedEventArgs e) { e.Handled = true; Hide(); }
+    private void OnToolbarMouseDown(object sender, MouseButtonEventArgs e) { e.Handled = true; }
+    private async void OnClosing(object? sender, CancelEventArgs e)
+    {
+        if (!_closingReady)
+        {
+            e.Cancel = true;
+            if (_closingStarted) return;
+            _closingStarted = true;
+            _idleTimer.Stop();
+            await _apps.StopAsync();
+            _closingReady = true;
+            _ = Dispatcher.BeginInvoke(new Action(Close));
+            return;
+        }
+        _softwareWindow?.Close();
         _idleTimer.Stop();
         _pointerTimer.Stop();
         _settingsWindow?.Close();

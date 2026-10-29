@@ -16,12 +16,16 @@ internal sealed class PetPreferences
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "GeminiCapyPet", "settings.json");
 
-    public static PetPreferences Load()
+    public static PetPreferences Load() => LoadFrom(SettingsPath);
+
+    // An explicit path lets characterization tests exercise the real serializer
+    // without reading or writing the user's live preferences.
+    internal static PetPreferences LoadFrom(string path)
     {
         try
         {
-            if (!File.Exists(SettingsPath)) return new();
-            var loaded = JsonSerializer.Deserialize<PetPreferences>(File.ReadAllText(SettingsPath)) ?? new();
+            if (!File.Exists(path)) return new();
+            var loaded = JsonSerializer.Deserialize<PetPreferences>(File.ReadAllText(path)) ?? new();
             loaded.Size = Math.Clamp(loaded.Size, 140, 360);
             if (!Enum.TryParse<PetPose>(loaded.Pose, out _))
                 loaded.Pose = nameof(PetPose.Automatic);
@@ -38,12 +42,14 @@ internal sealed class PetPreferences
     public PetPose SelectedPose =>
         Enum.TryParse<PetPose>(Pose, out var pose) ? pose : PetPose.Automatic;
 
-    public void Save()
+    public void Save() => SaveTo(SettingsPath);
+
+    internal void SaveTo(string path)
     {
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(this,
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, JsonSerializer.Serialize(this,
                 new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (Exception ex)

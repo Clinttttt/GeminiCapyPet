@@ -13,10 +13,18 @@ git diff --check
 dotnet build .\GeminiCapyPet.csproj -c Release
 ```
 
-There is no committed test project at baseline 8d98105. A successful build or an
-empty dotnet test run is not evidence that behavior tests exist or passed.
-Future commands must use actual created test-project paths, not the proposed
-directory tree copied into a command.
+There was no committed test project at baseline 8d98105. The later
+`tests/Capies.Characterization.Tests` suite exercises isolated legacy preferences
+and browser restore URL rules; run it with:
+
+```powershell
+dotnet test .\tests\Capies.Characterization.Tests\Capies.Characterization.Tests.csproj -c Release
+```
+
+Recorded 2026-10-29 working-tree result: 18 passed, 0 failed, 0 skipped.
+See [Gate 1 characterization](characterization-2026-10-29.md) for unverified
+manual Windows/latency cases. A successful build or an empty test run is not
+evidence of interactive behavior. Future commands must use real project paths.
 
 ## Documentation-only validation
 
@@ -107,3 +115,7 @@ Documentation-only work does not require a restart.
 - Performance: boundary and sample details when measured.
 - Unverified: scenarios/platforms not exercised and unresolved limitations.
 - Delivery: local changes / commit / push / publish / restart, each with evidence.
+
+## Software library increment
+
+See [software library implementation and evidence](software-library.md). The software manager, icon toolbar, tray collapse, catalog, and serialized coordinator now exist. The complete architecture migration and remaining acceptance gates are still partial.

@@ -14,6 +14,7 @@ pending. This documentation change does not implement the refactor.
 | [Architecture](architecture.md) | Target responsibilities, dependencies, state, and lifecycle |
 | [Engineering patterns](engineering-patterns.md) | Concrete rules for implementation and extension |
 | [Validation](validation.md) | Existing commands, required future checks, and evidence reporting |
+| [Gate 1 characterization](characterization-2026-10-29.md) | Local test results and outstanding manual Windows scenarios |
 | [Roadmap](roadmap.md) | Incremental migration with completion criteria |
 | [ADR 0001](decisions/0001-managed-app-architecture.md) | Why the managed-app architecture was chosen |
 | [Agent instructions](../AGENTS.md) | Repository rules for coding assistants |
@@ -45,3 +46,7 @@ source and checks named by the corresponding roadmap gate.
 These documents reduce unsupported assumptions; they do not automatically enforce
 project boundaries or prove runtime behavior. Automated architecture checks become
 possible once the planned projects and test suites actually exist.
+
+## Software library increment
+
+See [software library implementation and evidence](software-library.md). The software manager, icon toolbar, tray collapse, catalog, and serialized coordinator now exist. The complete architecture migration and remaining acceptance gates are still partial.

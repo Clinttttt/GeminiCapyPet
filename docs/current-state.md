@@ -91,3 +91,16 @@ The future settings migration must preserve them explicitly.
   compatibility were not established by that harness.
 - This documentation pass verifies source references; it does not rerun those
   historical runtime checks.
+
+## Post-baseline working-tree characterization (2026-10-29)
+
+A subsequent local change introduces `tests/Capies.Characterization.Tests` to test
+existing preferences and Gemini/ChatGPT saved conversation URL rules without
+reading user profile data. The observed result was 18 passing tests and a clean
+Release build. See [characterization evidence](characterization-2026-10-29.md).
+This is worktree evidence, not a retroactive change to the 8d98105 baseline.
+Window switching, menu rendering, and interactive user behavior were not retested.
+
+## Software library increment
+
+See [software library implementation and evidence](software-library.md). The software manager, icon toolbar, tray collapse, catalog, and serialized coordinator now exist. The complete architecture migration and remaining acceptance gates are still partial.

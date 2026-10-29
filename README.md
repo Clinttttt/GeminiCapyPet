@@ -62,3 +62,7 @@ switching and command handlers are independent of the renderer.
 This first version uses the supplied sleeping sprite sheet for wake/sleep,
 and subtle scaling for idle breathing. More sprite sheets can be added later
 for walking, jumping and waving.
+
+## Added software
+
+Use **Menu > Manage software...** to add a Windows .exe, select it, or remove its registration. Click the app icon or pet to show/hide the selected app. The minus button collapses Capies into the tray; double-click the tray icon to restore it. See [software library details](docs/software-library.md).

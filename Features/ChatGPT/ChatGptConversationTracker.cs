@@ -82,7 +82,7 @@ internal sealed class ChatGptConversationTracker
         catch (Exception ex) { PetLog.Info("ChatGPT tracking unavailable: " + ex.Message); }
     }
 
-    private static bool TryNormalize(string input, out string url)
+    internal static bool TryNormalize(string input, out string url)
     {
         url = "";
         if (!Uri.TryCreate(input.Trim(), UriKind.Absolute, out var uri)
