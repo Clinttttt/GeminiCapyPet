@@ -8,6 +8,7 @@ internal sealed class PetPreferences
     public string Pose { get; set; } = nameof(PetPose.Automatic);
     public double Size { get; set; } = 220;
     public bool AutoSleep { get; set; } = true;
+    public string ActiveChatProvider { get; set; } = "Gemini";
     public double? Left { get; set; }
     public double? Top { get; set; }
 

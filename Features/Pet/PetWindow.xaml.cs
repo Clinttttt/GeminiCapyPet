@@ -36,6 +36,14 @@ public partial class PetWindow : Window
     private enum ChatProvider { Gemini, ChatGpt }
     private ChatProvider _activeProvider = ChatProvider.Gemini;
 
+    private void SelectProvider(ChatProvider provider)
+    {
+        _activeProvider = provider;
+        _preferences.ActiveChatProvider = provider.ToString();
+        _preferences.Save();
+        PetLog.Info($"Selected chat provider: {provider}");
+    }
+
     private Task ToggleActiveChatAsync() => _activeProvider == ChatProvider.ChatGpt
         ? ToggleChatGptAsync() : ToggleGeminiAsync();
 
@@ -54,6 +62,9 @@ public partial class PetWindow : Window
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
+        _activeProvider = Enum.TryParse<ChatProvider>(_preferences.ActiveChatProvider, true, out var provider)
+            ? provider : ChatProvider.Gemini;
+        PetLog.Info($"Restored chat provider: {_activeProvider}");
         _animator.SetPose(_preferences.SelectedPose);
         ApplySize(_preferences.Size, false);
 
@@ -394,7 +405,7 @@ public partial class PetWindow : Window
     {
         if (_busy) return;
         _busy = true;
-        _activeProvider = ChatProvider.Gemini;
+        SelectProvider(ChatProvider.Gemini);
         PetLog.Info("Starting Gemini toggle");
         HintPill.Opacity = 0.95;
         HintText.Text = "Opening Gemini...";
