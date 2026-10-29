@@ -170,6 +170,14 @@ internal sealed class GeminiWindowController
         return _window;
     }
 
+    // Fast path: existing windows are already positioned. Avoid SetWindowPos
+    // and synchronous Edge messages on every pet click.
+    private void RestoreCachedWindow(IntPtr hwnd)
+    {
+        ShowWindowAsync(hwnd, IsIconic(hwnd) ? SwRestore : SwShow);
+        SetForegroundWindow(hwnd);
+        PetLog.Info("Gemini cached window restore requested.");
+    }
     private void BringGeminiForward(IntPtr hwnd)
     {
         if (IsIconic(hwnd)) ShowWindowAsync(hwnd, SwRestore);
