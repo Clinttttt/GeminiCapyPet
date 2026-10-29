@@ -396,6 +396,7 @@ public partial class PetWindow : Window
         _pointerTimer.Stop();
         _settingsWindow?.Close();
         _gemini.StopTracking();
+        _chatGpt.StopTracking();
         _animator.Dispose();
         if (_trayIcon != null)
         {

@@ -20,6 +20,15 @@ internal sealed class ChatGptLauncher
             "Microsoft", "Edge", "Application", "msedge.exe")
     }.FirstOrDefault(File.Exists) ?? throw new FileNotFoundException("Microsoft Edge not installed.");
     private IntPtr _window;
+    private readonly ChatGptConversationTracker _tracker;
+
+    public ChatGptLauncher()
+    {
+        _tracker = new ChatGptConversationTracker(_profile);
+        _tracker.Start();
+    }
+
+    public void StopTracking() => _tracker.Stop();
     public bool IsVisible => FindChatWindow() is var hwnd && hwnd != IntPtr.Zero && IsWindowVisible(hwnd);
     public void Hide()
     {
@@ -41,10 +50,12 @@ internal sealed class ChatGptLauncher
             return;
         }
 
+        _tracker.CaptureLatest();
         Directory.CreateDirectory(_profile);
+        var restoreUrl = _tracker.GetRestoreUrl();
         Process.Start(new ProcessStartInfo(_edge)
         {
-            Arguments = $"--user-data-dir=\"{_profile}\" --app=\"{Url}\" --new-window --no-first-run",
+            Arguments = $"--user-data-dir=\"{_profile}\" --app=\"{restoreUrl}\" --new-window --no-first-run",
             WorkingDirectory = Path.GetDirectoryName(_edge)!,
             UseShellExecute = false
         });
