@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
@@ -343,12 +343,23 @@ public partial class PetWindow : Window
 
     private async Task ToggleChatGptAsync()
     {
-        try { await _chatGpt.ToggleAsync(); }
+        if (_busy) return;
+        _busy = true;
+        try
+        {
+            if (_chatGpt.IsVisible) _chatGpt.Hide();
+            else
+            {
+                _gemini.Hide();
+                await _chatGpt.ToggleAsync();
+            }
+        }
         catch (Exception ex)
         {
             PetLog.Info("ChatGPT toggle failed: " + ex);
             System.Windows.MessageBox.Show(this, ex.Message, "Capies - ChatGPT", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+        finally { _busy = false; }
     }
 
     private async Task ToggleGeminiAsync()
@@ -360,6 +371,7 @@ public partial class PetWindow : Window
         HintText.Text = "Opening Gemini...";
         try
         {
+            if (!_gemini.IsVisible) _chatGpt.Hide();
             var visible = await _gemini.ToggleAsync();
             PetLog.Info($"Gemini toggle successful; visible={visible}");
             HintText.Text = visible ? "Gemini opened" : "Gemini hidden";

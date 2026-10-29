@@ -20,6 +20,12 @@ internal sealed class ChatGptLauncher
             "Microsoft", "Edge", "Application", "msedge.exe")
     }.FirstOrDefault(File.Exists) ?? throw new FileNotFoundException("Microsoft Edge not installed.");
     private IntPtr _window;
+    public bool IsVisible => FindChatWindow() is var hwnd && hwnd != IntPtr.Zero && IsWindowVisible(hwnd);
+    public void Hide()
+    {
+        var hwnd = FindChatWindow();
+        if (hwnd != IntPtr.Zero && IsWindowVisible(hwnd)) ShowWindow(hwnd, 0);
+    }
 
     public async Task ToggleAsync()
     {
