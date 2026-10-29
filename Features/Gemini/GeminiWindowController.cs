@@ -49,7 +49,9 @@ internal sealed class GeminiWindowController
 
     public async Task<bool> ToggleAsync()
     {
+        var stopwatch = Stopwatch.StartNew();
         var hwnd = FindWindow();
+        PetLog.Info($"Gemini timing: FindWindow={stopwatch.ElapsedMilliseconds}ms; handle={hwnd}");
         if (hwnd != IntPtr.Zero)
         {
             if (IsWindowVisible(hwnd) && !IsIconic(hwnd))
@@ -57,7 +59,8 @@ internal sealed class GeminiWindowController
                 ShowWindow(hwnd, SwHide);
                 return false;
             }
-            BringGeminiForward(hwnd);
+            RestoreCachedWindow(hwnd);
+            PetLog.Info($"Gemini timing: cached restore requested after {stopwatch.ElapsedMilliseconds}ms");
             return true;
         }
 
