@@ -32,6 +32,7 @@ public partial class PetWindow : Window
     private bool _pressed;
     private bool _dragging;
     private bool _busy;
+    private bool _pendingToggle;
     private enum ChatProvider { Gemini, ChatGpt }
     private ChatProvider _activeProvider = ChatProvider.Gemini;
 
@@ -337,9 +338,29 @@ public partial class PetWindow : Window
             return;
         }
         _animator.Wake();
-        _ = ToggleActiveChatAsync();
+        RequestPetToggle();
     }
 
+    // Serialize rapid clicks. A second click during startup is not discarded:
+    // it is replayed after the current toggle finishes.
+    private async void RequestPetToggle()
+    {
+        if (_busy)
+        {
+            _pendingToggle = !_pendingToggle;
+            PetLog.Info("Pet toggle queued while provider is busy.");
+            return;
+        }
+        await ToggleActiveChatAsync();
+    }
+
+    private void ReplayPendingToggle()
+    {
+        if (!_pendingToggle) return;
+        _pendingToggle = false;
+        Dispatcher.BeginInvoke(new Action(() => _ = ToggleActiveChatAsync()),
+            DispatcherPriority.Background);
+    }
     private void OnPetRightClick(object sender, MouseButtonEventArgs e)
     {
         PetLog.Info("Pet right-click menu requested");
@@ -366,7 +387,7 @@ public partial class PetWindow : Window
             PetLog.Info("ChatGPT toggle failed: " + ex);
             System.Windows.MessageBox.Show(this, ex.Message, "Capies - ChatGPT", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
-        finally { _busy = false; }
+        finally { _busy = false; ReplayPendingToggle(); }
     }
 
     private async Task ToggleGeminiAsync()
