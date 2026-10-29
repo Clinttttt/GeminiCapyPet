@@ -19,6 +19,7 @@ internal sealed class ChatGptLauncher
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
             "Microsoft", "Edge", "Application", "msedge.exe")
     }.FirstOrDefault(File.Exists) ?? throw new FileNotFoundException("Microsoft Edge not installed.");
+    private const string WindowTag = "GeminiCapyPet.ChatGptWindow";
     private IntPtr _window;
     private readonly ChatGptConversationTracker _tracker;
 
@@ -136,6 +137,8 @@ internal sealed class ChatGptLauncher
         public uint dwFlags;
     }
     private delegate bool Callback(IntPtr h, IntPtr param);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr GetProp(IntPtr hwnd, string name);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern bool SetProp(IntPtr hwnd, string name, IntPtr value);
     [DllImport("user32.dll")] private static extern bool EnumWindows(Callback callback, IntPtr param);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr h, StringBuilder text, int max);

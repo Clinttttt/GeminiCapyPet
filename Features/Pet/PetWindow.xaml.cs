@@ -383,7 +383,7 @@ public partial class PetWindow : Window
     {
         if (_busy) return;
         _busy = true;
-        _activeProvider = ChatProvider.ChatGpt;
+        SelectProvider(ChatProvider.ChatGpt);
         try
         {
             if (_chatGpt.IsVisible) _chatGpt.Hide();
