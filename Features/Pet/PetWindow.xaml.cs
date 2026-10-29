@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
@@ -14,6 +14,7 @@ public partial class PetWindow : Window
 {
     private readonly SpriteAnimator _animator;
     private readonly GeminiWindowController _gemini = new();
+    private readonly ChatGptLauncher _chatGpt = new();
     private readonly PetPreferences _preferences = PetPreferences.Load();
     private readonly DispatcherTimer _idleTimer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly DispatcherTimer _pointerTimer = new() { Interval = TimeSpan.FromMilliseconds(20) };
@@ -136,7 +137,7 @@ public partial class PetWindow : Window
     {
         _menu = new Forms.ContextMenuStrip();
         _menu.Items.Add("Show / hide Gemini", null, async (_, _) => await ToggleGeminiAsync());
-        _menu.Items.Add("Open ChatGPT chat", null, (_, _) => ChatGptLauncher.Open());
+        _menu.Items.Add("Show / hide ChatGPT", null, async (_, _) => await ToggleChatGptAsync());
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add("Customize pet...", null, (_, _) => OpenSettings());
 
@@ -340,6 +341,16 @@ public partial class PetWindow : Window
         e.Handled = true;
     }
 
+    private async Task ToggleChatGptAsync()
+    {
+        try { await _chatGpt.ToggleAsync(); }
+        catch (Exception ex)
+        {
+            PetLog.Info("ChatGPT toggle failed: " + ex);
+            System.Windows.MessageBox.Show(this, ex.Message, "Capies - ChatGPT", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
     private async Task ToggleGeminiAsync()
     {
         if (_busy) return;
@@ -387,3 +398,4 @@ public partial class PetWindow : Window
         _menu?.Dispose();
     }
 }
+
