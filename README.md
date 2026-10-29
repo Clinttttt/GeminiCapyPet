@@ -1,0 +1,42 @@
+# Gemini Capy Pet (.NET 10 + WPF)
+
+A transparent, draggable Windows desktop companion that uses the 25-frame
+Capies-sleep.png sprite sheet and toggles a dedicated Gemini browser app window.
+
+## Start
+
+Run `dotnet run --project C:\dev\GeminiCapyPet\GeminiCapyPet.csproj`.
+
+Or run the published executable under `publish\GeminiCapyPet.exe`.
+
+## Controls
+
+- Left click Capies: open/hide Gemini.
+- Left drag Capies: reposition on the desktop.
+- Hover: wake up and show a tooltip.
+- Right-click Capies / system-tray icon: **Customize pet...**, pose, size,
+  automatic sleep toggle, reset position, and exit.
+- Customize window: choose Automatic/Standing/Sitting/Lying down/Sleeping,
+  resize the pet live with the 140–360 px slider, and toggle auto-sleep.
+- Position, pose, size and auto-sleep are saved across restarts in
+  %LOCALAPPDATA%\\GeminiCapyPet\\settings.json.
+- After 45 seconds of inactivity while Gemini is hidden, Capies falls asleep.
+- On the first Gemini launch, sign in to Google if asked. The dedicated Edge
+  profile is persisted under %LOCALAPPDATA%\GeminiCapyPet\EdgeProfile.
+
+## Implementation
+
+- C# / WPF on .NET 10; transparency and Topmost Window.
+- Sprite animation is 25 frames, 5 columns x 5 rows, each 256 px.
+- Breathing is animated using WPF DoubleAnimation.
+- Uses the *real Gemini website* launched in Microsoft Edge app mode, not an
+  unofficial API or embedded browser. Requires Microsoft Edge.
+- Show/hide is done using native Win32 window handles from that Edge process.
+- Closing the pet doesn't delete your Edge profile or browser sign-in.
+- The pet is not affiliated with Google or OpenAI.
+
+## Notes
+
+This first version uses the supplied sleeping sprite sheet for wake/sleep,
+and subtle scaling for idle breathing. More sprite sheets can be added later
+for walking, jumping and waving.

@@ -1,0 +1,14 @@
+bin/
+obj/
+publish/
+.vs/
+.vscode/
+*.user
+*.suo
+*.log
+last-conversation.txt
+EdgeProfile/
+settings.json
+.env
+*.pfx
+*.key
