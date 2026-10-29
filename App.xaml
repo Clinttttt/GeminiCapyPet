@@ -1,7 +1,7 @@
-<Application x:Class="GeminiCapyPet.App"
+﻿<Application x:Class="GeminiCapyPet.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="PetWindow.xaml">
+             StartupUri="Features/Pet/PetWindow.xaml">
     <Application.Resources>
     </Application.Resources>
 </Application>
