@@ -416,7 +416,7 @@ public partial class PetWindow : Window
         {
             var visible = await Task.Run(async () =>
             {
-                if (!_gemini.IsVisible) _chatGpt.Hide();
+                if (!_gemini.IsVisible) _chatGpt.HideIfCached();
                 return await _gemini.ToggleAsync();
             });
             PetLog.Info($"Gemini toggle successful; visible={visible}");
@@ -433,6 +433,7 @@ public partial class PetWindow : Window
         {
             _busy = false;
             _lastActivity = DateTime.UtcNow;
+            ReplayPendingToggle();
         }
     }
 
