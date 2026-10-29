@@ -172,13 +172,13 @@ internal sealed class GeminiWindowController
 
     private void BringGeminiForward(IntPtr hwnd)
     {
-        if (IsIconic(hwnd)) ShowWindow(hwnd, SwRestore);
-        else if (!IsWindowVisible(hwnd)) ShowWindow(hwnd, SwShow);
+        if (IsIconic(hwnd)) ShowWindowAsync(hwnd, SwRestore);
+        else if (!IsWindowVisible(hwnd)) ShowWindowAsync(hwnd, SwShow);
         PositionOnRight(hwnd);
         // A short topmost pulse reliably raises the window even when Edge
         // is behind another application; do not leave it always-on-top.
-        SetWindowPos(hwnd, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040);
-        SetWindowPos(hwnd, new IntPtr(-2), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040);
+        SetWindowPos(hwnd, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040 | 0x4000);
+        SetWindowPos(hwnd, new IntPtr(-2), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040 | 0x4000);
         SetForegroundWindow(hwnd);
         PetLog.Info("Gemini raised and positioned at top-right.");
     }
@@ -201,7 +201,7 @@ internal sealed class GeminiWindowController
         var height = Math.Min(DefaultHeight, Math.Max(400, availableHeight - EdgeMargin * 2));
         var x = work.Right - width;
         var y = work.Top;
-        if (!SetWindowPos(hwnd, IntPtr.Zero, x, y, width, height, 0x0004 | 0x0010))
+        if (!SetWindowPos(hwnd, IntPtr.Zero, x, y, width, height, 0x0004 | 0x0010 | 0x4000))
             PetLog.Info("Unable to position Gemini on the right.");
     }
 
@@ -239,6 +239,8 @@ internal sealed class GeminiWindowController
     private static extern bool IsWindowVisible(IntPtr hwnd);
     [DllImport("user32.dll")]
     private static extern bool ShowWindow(IntPtr hwnd, int command);
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindowAsync(IntPtr hwnd, int command);
     [DllImport("user32.dll")]
     private static extern bool SetForegroundWindow(IntPtr hwnd);
 }

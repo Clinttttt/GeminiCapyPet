@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -118,7 +118,7 @@ internal sealed class ChatGptLauncher
 
     private static void ShowAndPosition(IntPtr hwnd)
     {
-        ShowWindow(hwnd, IsIconic(hwnd) ? 9 : 5);
+        ShowWindowAsync(hwnd, IsIconic(hwnd) ? 9 : 5);
         var monitor = MonitorFromWindow(hwnd, 2);
         var info = new MonitorInfo { cbSize = Marshal.SizeOf<MonitorInfo>() };
         if (GetMonitorInfo(monitor, ref info))
@@ -127,10 +127,10 @@ internal sealed class ChatGptLauncher
             var width = Math.Min(600, work.Right - work.Left);
             var height = Math.Min(800, work.Bottom - work.Top);
             SetWindowPos(hwnd, IntPtr.Zero, work.Right - width, work.Top,
-                width, height, 0x0004 | 0x0010);
+                width, height, 0x0004 | 0x0010 | 0x4000);
         }
-        SetWindowPos(hwnd, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040);
-        SetWindowPos(hwnd, new IntPtr(-2), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040);
+        SetWindowPos(hwnd, new IntPtr(-1), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040 | 0x4000);
+        SetWindowPos(hwnd, new IntPtr(-2), 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040 | 0x4000);
         SetForegroundWindow(hwnd);
     }
 
@@ -153,6 +153,7 @@ internal sealed class ChatGptLauncher
     [DllImport("user32.dll")] private static extern bool IsWindow(IntPtr h);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr h);
     [DllImport("user32.dll")] private static extern bool IsIconic(IntPtr h);
+    [DllImport("user32.dll")] private static extern bool ShowWindowAsync(IntPtr hwnd, int command);
     [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr h, int command);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr h, uint flags);

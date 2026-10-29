@@ -386,12 +386,15 @@ public partial class PetWindow : Window
         SelectProvider(ChatProvider.ChatGpt);
         try
         {
-            if (_chatGpt.IsVisible) _chatGpt.Hide();
-            else
+            await Task.Run(async () =>
             {
-                _gemini.Hide();
-                await _chatGpt.ToggleAsync();
-            }
+                if (_chatGpt.IsVisible) _chatGpt.Hide();
+                else
+                {
+                    _gemini.Hide();
+                    await _chatGpt.ToggleAsync();
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -411,8 +414,11 @@ public partial class PetWindow : Window
         HintText.Text = "Opening Gemini...";
         try
         {
-            if (!_gemini.IsVisible) _chatGpt.Hide();
-            var visible = await _gemini.ToggleAsync();
+            var visible = await Task.Run(async () =>
+            {
+                if (!_gemini.IsVisible) _chatGpt.Hide();
+                return await _gemini.ToggleAsync();
+            });
             PetLog.Info($"Gemini toggle successful; visible={visible}");
             HintText.Text = visible ? "Gemini opened" : "Gemini hidden";
         }
