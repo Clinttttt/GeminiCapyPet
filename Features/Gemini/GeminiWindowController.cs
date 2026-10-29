@@ -111,6 +111,15 @@ internal sealed class GeminiWindowController
             return _window;
 
         _window = IntPtr.Zero;
+        // Find previously tagged windows without blocking on WMI.
+        EnumWindows((h, _) =>
+        {
+            if (GetProp(h, WindowTag) == IntPtr.Zero) return true;
+            _window = h;
+            return false;
+        }, IntPtr.Zero);
+        if (_window != IntPtr.Zero) return _window;
+
         var candidatePids = Process.GetProcessesByName("msedge")
             .Where(p =>
             {

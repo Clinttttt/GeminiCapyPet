@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -76,6 +76,13 @@ internal sealed class ChatGptLauncher
     {
         if (_window != IntPtr.Zero && IsWindow(_window)) return _window;
         _window = IntPtr.Zero;
+        EnumWindows((h, _) =>
+        {
+            if (GetProp(h, WindowTag) == IntPtr.Zero) return true;
+            _window = h;
+            return false;
+        }, IntPtr.Zero);
+        if (_window != IntPtr.Zero) return _window;
         var pids = new HashSet<uint>();
         foreach (var process in Process.GetProcessesByName("msedge"))
         {
@@ -103,6 +110,7 @@ internal sealed class ChatGptLauncher
             if (!title.ToString().Contains("ChatGPT", StringComparison.OrdinalIgnoreCase))
                 return true;
             _window = h;
+            SetProp(h, WindowTag, new IntPtr(1));
             return false;
         }, IntPtr.Zero);
         return _window;
