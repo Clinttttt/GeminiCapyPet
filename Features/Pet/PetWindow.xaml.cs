@@ -20,7 +20,7 @@ public partial class PetWindow : Window
     private readonly DispatcherTimer _pointerTimer = new() { Interval = TimeSpan.FromMilliseconds(20) };
 
     private Forms.NotifyIcon? _trayIcon;
-    private Forms.ContextMenuStrip? _menu;
+    private GlassContextMenuStrip? _menu;
     private Forms.ToolStripMenuItem? _poseMenu;
     private Forms.ToolStripMenuItem? _sizeMenu;
     private Forms.ToolStripMenuItem? _autoSleepMenu;
@@ -152,7 +152,7 @@ public partial class PetWindow : Window
 
     private void SetupTray()
     {
-        _menu = new Forms.ContextMenuStrip();
+        _menu = new GlassContextMenuStrip();
         _menu.Items.Add("Show / hide Gemini", null, async (_, _) => await ToggleGeminiAsync());
         _menu.Items.Add("Show / hide ChatGPT", null, async (_, _) => await ToggleChatGptAsync());
         _menu.Items.Add(new Forms.ToolStripSeparator());
@@ -203,6 +203,7 @@ public partial class PetWindow : Window
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add("Exit Gemini Capy Pet", null, (_, _) => Close());
 
+        _menu.InitializeTheme();
         UpdateMenuSelections();
 
         _trayIcon = new Forms.NotifyIcon

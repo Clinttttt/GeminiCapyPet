@@ -24,6 +24,18 @@ Or run the published executable under `publish\GeminiCapyPet.exe`.
 - On the first Gemini launch, sign in to Google if asked. The dedicated Edge
   profile is persisted under %LOCALAPPDATA%\GeminiCapyPet\EdgeProfile.
 
+## Tray menu
+
+The pet and tray icon share a charcoal glass-style native menu with subtle
+translucency, rounded hover highlights, and matching pose/size submenus.
+Arrow keys, Enter, Escape, checked choices, and disabled auto-sleep behavior
+continue to use WinForms menu handling. Windows High Contrast uses opaque
+system colors. Windows 11 corner rounding is optional; the menu also works
+without it. The glass effect uses lightweight 96% opacity, not acrylic blur.
+
+Menu styling is in `Infrastructure/Tray/GlassContextMenuStrip.cs`; provider
+switching and command handlers are independent of the renderer.
+
 ## Implementation
 
 - C# / WPF on .NET 10; transparency and Topmost Window.
