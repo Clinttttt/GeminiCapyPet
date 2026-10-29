@@ -32,6 +32,11 @@ public partial class PetWindow : Window
     private bool _pressed;
     private bool _dragging;
     private bool _busy;
+    private enum ChatProvider { Gemini, ChatGpt }
+    private ChatProvider _activeProvider = ChatProvider.Gemini;
+
+    private Task ToggleActiveChatAsync() => _activeProvider == ChatProvider.ChatGpt
+        ? ToggleChatGptAsync() : ToggleGeminiAsync();
 
     internal PetPose SelectedPose => _animator.Pose;
     internal double PetSize => Width;
@@ -190,7 +195,7 @@ public partial class PetWindow : Window
 
         _trayIcon = new Forms.NotifyIcon
         {
-            Text = "Gemini Capy Pet - Click Capies to toggle Gemini",
+            Text = "Capies - Click to toggle selected chat",
             Icon = Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!)
                 ?? Drawing.SystemIcons.Application,
             Visible = true,
@@ -253,7 +258,7 @@ public partial class PetWindow : Window
     private void OnIdleTick(object? sender, EventArgs e)
     {
         if (_preferences.AutoSleep && SelectedPose == PetPose.Automatic &&
-            !_pressed && !_busy && !_gemini.IsVisible &&
+            !_pressed && !_busy && !_gemini.IsVisible && !_chatGpt.IsVisible &&
             DateTime.UtcNow - _lastActivity > TimeSpan.FromSeconds(45))
             _animator.Sleep();
     }
@@ -262,7 +267,8 @@ public partial class PetWindow : Window
     {
         _lastActivity = DateTime.UtcNow;
         HintPill.Opacity = 0.95;
-        HintText.Text = "Click to toggle Gemini";
+        HintText.Text = _activeProvider == ChatProvider.ChatGpt
+            ? "Click to toggle ChatGPT" : "Click to toggle Gemini";
         _animator.Wake();
     }
 
@@ -331,7 +337,7 @@ public partial class PetWindow : Window
             return;
         }
         _animator.Wake();
-        _ = ToggleGeminiAsync();
+        _ = ToggleActiveChatAsync();
     }
 
     private void OnPetRightClick(object sender, MouseButtonEventArgs e)
@@ -345,6 +351,7 @@ public partial class PetWindow : Window
     {
         if (_busy) return;
         _busy = true;
+        _activeProvider = ChatProvider.ChatGpt;
         try
         {
             if (_chatGpt.IsVisible) _chatGpt.Hide();
@@ -366,6 +373,7 @@ public partial class PetWindow : Window
     {
         if (_busy) return;
         _busy = true;
+        _activeProvider = ChatProvider.Gemini;
         PetLog.Info("Starting Gemini toggle");
         HintPill.Opacity = 0.95;
         HintText.Text = "Opening Gemini...";
