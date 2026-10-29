@@ -136,6 +136,7 @@ public partial class PetWindow : Window
     {
         _menu = new Forms.ContextMenuStrip();
         _menu.Items.Add("Show / hide Gemini", null, async (_, _) => await ToggleGeminiAsync());
+        _menu.Items.Add("Open ChatGPT chat", null, (_, _) => ChatGptLauncher.Open());
         _menu.Items.Add(new Forms.ToolStripSeparator());
         _menu.Items.Add("Customize pet...", null, (_, _) => OpenSettings());
 
