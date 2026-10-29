@@ -391,7 +391,7 @@ public partial class PetWindow : Window
                 if (_chatGpt.IsVisible) _chatGpt.Hide();
                 else
                 {
-                    _gemini.Hide();
+                    _gemini.HideIfCached();
                     await _chatGpt.ToggleAsync();
                 }
             });

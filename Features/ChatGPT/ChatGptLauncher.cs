@@ -92,24 +92,22 @@ internal sealed class ChatGptLauncher
             return false;
         }, IntPtr.Zero);
         if (_window != IntPtr.Zero) return _window;
+        // One WMI query instead of one query per Edge subprocess.
         var pids = new HashSet<uint>();
-        foreach (var process in Process.GetProcessesByName("msedge"))
+        try
         {
-            try
+            using var query = new System.Management.ManagementObjectSearcher(
+                "SELECT ProcessId, CommandLine FROM Win32_Process WHERE Name='msedge.exe'");
+            foreach (System.Management.ManagementObject item in query.Get())
             {
-                using var query = new System.Management.ManagementObjectSearcher(
-                    $"SELECT CommandLine FROM Win32_Process WHERE ProcessId={process.Id}");
-                foreach (System.Management.ManagementObject item in query.Get())
-                {
-                    var cmd = item["CommandLine"]?.ToString() ?? "";
-                    if (cmd.Contains(_profile, StringComparison.OrdinalIgnoreCase)
-                        && !cmd.Contains("--type=", StringComparison.OrdinalIgnoreCase))
-                        pids.Add((uint)process.Id);
-                }
+                var cmd = item["CommandLine"]?.ToString() ?? "";
+                if (cmd.Contains(_profile, StringComparison.OrdinalIgnoreCase)
+                    && !cmd.Contains("--type=", StringComparison.OrdinalIgnoreCase)
+                    && item["ProcessId"] is uint pid)
+                    pids.Add(pid);
             }
-            catch { }
-            finally { process.Dispose(); }
         }
+        catch (Exception ex) { PetLog.Info("ChatGPT process discovery failed: " + ex.Message); }
         EnumWindows((h, _) =>
         {
             GetWindowThreadProcessId(h, out var pid);

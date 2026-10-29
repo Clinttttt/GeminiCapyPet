@@ -41,6 +41,13 @@ internal sealed class GeminiWindowController
 
     public bool IsVisible => FindWindow() is var h && h != IntPtr.Zero && IsWindowVisible(h);
     public void StopTracking() => _tracker.Stop();
+    public void HideIfCached()
+    {
+        var hwnd = _window;
+        if (hwnd != IntPtr.Zero && IsWindow(hwnd) && IsWindowVisible(hwnd))
+            ShowWindow(hwnd, SwHide);
+    }
+
     public void Hide()
     {
         var hwnd = FindWindow();
